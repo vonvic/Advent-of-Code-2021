@@ -25,8 +25,8 @@ def mark_board(board: list, loc: tuple) -> None:
     row, col = loc
     board[row][col] = 'X'
 
-def find_board(boards: list, drawings: list) -> tuple:
-    '''Returns the winning board based on the drawings'''
+def find_first_winning_board(boards: list, drawings: list) -> tuple:
+    '''Returns the first winning board based on the drawings'''
     current_drawings = []
     for drawing in drawings:
         current_drawings.append(drawing)
@@ -38,6 +38,28 @@ def find_board(boards: list, drawings: list) -> tuple:
                 return (board, current_drawings.pop())
 
     return (None, None)
+
+def find_last_winning_board(boards: list, drawings: list) -> tuple:
+    '''Returns the last winning board based on the drawings'''
+    current_drawings = []
+    winning_board = None
+
+    winning_draw: int
+    winning_boards = []
+    for drawing in drawings:
+        current_drawings.append(drawing)
+        for board in boards:
+            if board in winning_boards: continue
+
+            location = get_location(board, drawing)
+            if not location: continue
+
+            mark_board(board, location)
+            if check_win(board, location):
+                winning_board, winning_draw = board, drawing
+                winning_boards.append(board)
+
+    return (winning_board, winning_draw)
 
 def get_sum_unmarked(board: list) -> int:
     '''Returns the sum of '''
@@ -64,9 +86,16 @@ if __name__ == '__main__':
                 boards.append(board)
                 board = []
     
-    board, winning_number = find_board(boards, drawings)
+    board, winning_number = find_first_winning_board(boards, drawings)
     sum_unmarked = get_sum_unmarked(board)
-    print(f'Board: {board}')
+    print(f'First winning Board: {board}')
+    print(f'Sum of uncalled numbers: {sum_unmarked}')
+    print(f'Winning number: {winning_number}')
+    print(f'Multiplied: {sum_unmarked*winning_number}')
+
+    board, winning_number = find_last_winning_board(boards, drawings)
+    sum_unmarked = get_sum_unmarked(board)
+    print(f'Last winning Board: {board}')
     print(f'Sum of uncalled numbers: {sum_unmarked}')
     print(f'Winning number: {winning_number}')
     print(f'Multiplied: {sum_unmarked*winning_number}')
