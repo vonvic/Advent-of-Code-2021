@@ -3,16 +3,18 @@ def run_moves(moves: list) -> tuple:
     and horizontal positions after executing all moves contained in `moves`.'''
     depth = 0
     hor_pos = 0
+    aim = 0
 
     for move in moves:
         direction, distance = move
         match direction:
             case 'forward':
                 hor_pos += distance
+                depth += distance * aim
             case 'up':
-                depth -= distance
+                aim -= distance
             case 'down':
-                depth += distance
+                aim += distance
             case _:
                 raise ValueError(f'Unknown direction {direction}')
     return (depth, hor_pos)
