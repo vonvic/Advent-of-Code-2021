@@ -41,6 +41,9 @@ def lay_segments(segments: list, matrix: list) -> None:
         elif y1 == y2: # horizontal
             for i in range(abs(x2-x1)+1): matrix[y1][min(x1,x2)+i] += 1
         else: # diagonal
+            x_delta = 1 if x2 > x1 else -1
+            y_delta = 1 if y2 > y1 else -1
+            for i in range(abs(y2-y1)+1): matrix[y1+y_delta*i][x1+x_delta*i] += 1
             pass
 
 def output_matrix(matrix: list, out_name: str):
