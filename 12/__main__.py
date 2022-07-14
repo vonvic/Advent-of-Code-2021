@@ -96,17 +96,56 @@ def _get_distinct_paths(cave: Cave, visited: set = set()) -> list:
     return paths
 
 def get_distinct_paths(cave_start: Cave) -> list:
-    '''Returns a list of all distict paths starting at `cave_start` to a cave of
+    '''Returns a list of all distinct paths starting at `cave_start` to a cave of
     type 'CaveType.END'.'''
     paths = _get_distinct_paths(cave_start)
+    return paths
+
+def _get_distinct_new_paths(cave: Cave, visited: set = set(), first_small_cave: Cave = None) -> list:
+    '''Recursively traverses through all nodes connected with `cave`. Any
+    adjacent connections that are already visited will not be traversed. The
+    START cave will also not be visited. BIG caves can be visited more than
+    once. Out of all small caves visited, only one of them can be visited at
+    most twice. The rest of the small caves can be visited only at most once.''' 
+    if cave.type is CaveType.END: return {(cave.name,)}
+
+    paths = set()
+
+    connection: Cave
+    for connection in cave.connections:
+        if connection in visited or connection.type is CaveType.START: continue
+
+        new_first_small: Cave = first_small_cave
+        if not new_first_small and connection.type is CaveType.SMALL:
+            new_first_small = connection
+
+        if first_small_cave and connection.type is CaveType.SMALL: visited.add(connection)
+        connection_paths = _get_distinct_new_paths(connection, visited, new_first_small)
+        if first_small_cave and connection.type is CaveType.SMALL: visited.remove(connection)
+
+        if not first_small_cave:
+            if connection.type is CaveType.SMALL: visited.add(connection)
+            connection_paths |= _get_distinct_new_paths(connection, visited)
+            if connection.type is CaveType.SMALL: visited.remove(connection)
+
+        for path in connection_paths: paths.add((cave.name,) + path)
+
+    return paths
+
+def get_distinct_new_paths(cave_start: Cave) -> list:
+    '''Returns a list of all distinct paths starting at `cave_start` to a cave of
+    type 'CaveType.END' with new rules'''
+    paths = _get_distinct_new_paths(cave_start)
     return paths
 
 def main():
     connections = load_connections('input.txt')
     cave_start = build_cave(connections)
     paths = get_distinct_paths(cave_start)
+    new_paths = get_distinct_new_paths(cave_start)
 
     print('Number of distinct paths:', len(paths))
+    print('Number of distinct new paths:', len(new_paths))
 
 if __name__ == '__main__':
     main()
