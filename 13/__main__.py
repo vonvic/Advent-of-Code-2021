@@ -20,7 +20,7 @@ def get_points_and_folds(filename: str) -> tuple:
 
     return (points, folds)
 
-def get_matrix_size_from_points(points: list) -> tuple:
+def get_matrix_size_from_points(points: list[tuple]) -> tuple:
     '''Returns the (x, y) size of matrix.'''
     rows, cols = points[0]
 
@@ -37,10 +37,10 @@ def default_matrix(rows: int, cols: int) -> list:
         matrix.append(['.' for _ in range(cols)])
     return matrix
 
-def print_matrix(matrix: list):
+def print_matrix(matrix: list[list[str]]) -> None:
     for row in matrix: print(''.join(row))
 
-def plot_points(matrix: list, points: list):
+def plot_points(matrix: list[list[str]], points: list[tuple]):
     for x, y in points: matrix[y][x] = '#'
 
 def get_matrix_and_folds(filename: str) -> tuple:
@@ -77,7 +77,6 @@ def simulate_folding(points: list, folds: list):
 
     for fold in folds:
         axis, position = fold
-
         new_points = set() # gather new points after folding each point
         for point in points:
             x, y = point
