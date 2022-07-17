@@ -96,10 +96,8 @@ def find_lowest_risk_path(matrix: Matrix):
         return abs(p1.x-p1.y) + abs(p2.x-p2.y)
 
     def f(node: Node) -> float:
-        return node.cost + heuristic(node.position, goal)
-        # return node.cost
-
-    # f = open('out.txt', 'r', 'f')
+        # return node.cost + heuristic(node.position, goal)
+        return node.cost
 
     current_node = Node(0, start)
     frontier = {current_node}
