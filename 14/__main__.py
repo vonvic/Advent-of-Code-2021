@@ -15,24 +15,20 @@ def get_template_and_rules(filename: str) -> tuple:
 def get_freq_table_after_running(template: str, rules: dict, N: int):
     '''Returns the frequency of all the letters in the final string after
     running `template` against `rules` for `N` times.'''
-    pairs_freq = {pair: 0 for pair in rules.keys()}
-    for i, v in enumerate(template[:-1]):
-        pair = v + template[i+1]
-        pairs_freq[pair] += 1
+    from collections import Counter
+    from itertools import pairwise
+    pairs_freq = Counter(map(''.join, pairwise(template)))
     
-    letter_freq = {letter : template.count(letter) for letter in set(template)}
+    letter_freq = Counter(template)
     for _ in range(N):
-        new_freq = {pair: 0 for pair in rules.keys()}
+        new_counter = Counter()
         for pair, freq in pairs_freq.items():
-            if freq == 0: continue
-
             c = rules[pair]
             l, r = pair
-            new_freq[l+c] += freq
-            new_freq[c+r] += freq
-
-            letter_freq[c] = letter_freq.get(c, 0) + freq
-        pairs_freq = new_freq
+            new_counter[l+c] += freq
+            new_counter[c+r] += freq
+            letter_freq[c] += freq
+        pairs_freq = new_counter
     return letter_freq
 
 def get_most_and_least_count(freq: dict) -> tuple[int, int]:
