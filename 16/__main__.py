@@ -1,5 +1,5 @@
 from __future__ import annotations
-from lib2to3.pgen2.grammar import opmap_raw
+from ast import Return
 
 class Packet:
     _VERSION_BIT_LENGTH: int = 3
@@ -8,30 +8,87 @@ class Packet:
     _NUMBER_OPERATOR_VALUE_BIT_LENGTH = 11
     _LENGTH_OPERATOR_VALUE_BIT_LENGTH = 15
 
+    _SUM_TYPE_ID = 0
+    _PRODUCT_TYPE_ID = 1
+    _MINIMUM_TYPE_ID = 2
+    _MAXIMUM_TYPE_ID = 3
     _LITERAL_TYPE_ID = 4
+    _GT_TYPE_ID = 5
+    _LT_TYPE_ID = 6
+    _EQ_TYPE_ID = 7
+
     _LENGTH_OPERATOR_LENGTH_TYPE_ID = 0
     _NUMBER_OPERATOR_LENGTH_TYPE_ID = 1
-    def __init__(self, bit_string: str):
-        version_start, version_end = 0, Packet._VERSION_BIT_LENGTH
-        type_id_start, type_id_end = version_end, version_end + Packet._TYPE_ID_BIT_LENGTH
-        content_start = type_id_end
-        number_base = 2
-        self._version: int = int(bit_string[version_start:version_end], number_base)
-        self._type_id: int = int(bit_string[type_id_start:type_id_end], number_base)
-        self._content_unbounded: str = bit_string[content_start:]
-        self._subpackets = []
 
+    _VERSION_START, _VERSION_END = 0, _VERSION_BIT_LENGTH
+    _TYPE_ID_START, _TYPE_ID_END = _VERSION_END, _VERSION_END + _TYPE_ID_BIT_LENGTH
+    _CONTENT_START = _TYPE_ID_END
+    def __init__(self, bit_string: str):
+        self._version: int = Packet._get_version(bit_string)
+        self._type_id: int = Packet._get_type_id(bit_string)
+        self._content_unbounded: str = Packet._get_content_unbounded(bit_string)
+        self._subpackets: list[Packet] = []
+
+        # initial length
         self._length = Packet._VERSION_BIT_LENGTH + Packet._TYPE_ID_BIT_LENGTH
         if self._type_id == Packet._LITERAL_TYPE_ID:
-            self.process_literal()
+            self._process_literal()
         else:
+            # collect all subpackets first before calculating the value
             self._length_type_id = int(self._content_unbounded[0])
             if self._length_type_id == Packet._LENGTH_OPERATOR_LENGTH_TYPE_ID:
-                self.process_length_operator()
+                self._collect_subpackets_length_operator()
             else:
-                self.process_number_operator()
+                self._collect_subpackets_number_operator()
 
-    def process_literal(self):
+            # calculate all the values
+            match self._type_id:
+                case 0: self._process_sum()
+                case 1: self._process_product()
+                case 2: self._process_min()
+                case 3: self._process_max()
+                case 5: self._process_gt()
+                case 6: self._process_lt()
+                case 7: self._process_eq()
+            
+    def _get_version(s: str) -> int:
+        return int(s[Packet._VERSION_START:Packet._VERSION_END], 2)
+    
+    def _get_type_id(s: str) -> int:
+        return int(s[Packet._TYPE_ID_START:Packet._TYPE_ID_END], 2)
+
+    def _get_content_unbounded(s: str) -> str:
+        return s[Packet._CONTENT_START:]
+
+    def _process_sum(self):
+        from functools import reduce
+        self._value = reduce(lambda p, x: p + x.value, self._subpackets, 0)
+    
+    def _process_product(self):
+        from functools import reduce
+        self._value = reduce(lambda p, x: p * x.value, self._subpackets, 1)
+
+    def _process_min(self):
+        self._value = min(self._subpackets, key=lambda p: p.value).value
+
+    def _process_max(self):
+        self._value = max(self._subpackets, key=lambda p: p.value).value
+
+    def _process_gt(self):
+        self._value = int(self._subpackets[0].value > self._subpackets[1].value)
+    
+    def _process_lt(self):
+        self._value = int(self._subpackets[0].value < self._subpackets[1].value)
+    
+    def _process_eq(self):
+        self._value = int(self._subpackets[0].value == self._subpackets[1].value)
+
+    def _process_literal(self):
+        '''Loops through 5-bit sections of `self._content_unbounded. If the
+        first bit of a section is not zero, then add the rest of the section
+        to the resulting bit string. If it is zero, then after adding the rest
+        of the section, terminate. Convert the collected bit string into a
+        decimal number and set it to the value. Track the length as well.'''
         bit_str = ''
         bit_section_length = 5
         curr = self._content_unbounded
@@ -42,8 +99,12 @@ class Packet:
         bit_str += curr[1:bit_section_length]
         self._length += bit_section_length
 
-        self._literal_value = int(bit_str, 2)
-    def process_length_operator(self):
+        self._value = int(bit_str, 2)
+    def _collect_subpackets_length_operator(self):
+        '''Collect all subpackets collectively from self._content_bounded by
+        determining the length of its subpackets from bits 1 to 16. Then
+        obtain and store each subpacket until the length of all the subpackets
+        are equal to the length calculated beforehand.'''
         start = 1
         end = 1 + Packet._LENGTH_OPERATOR_VALUE_BIT_LENGTH
         self._length_of_subpackets = int(self._content_unbounded[start:end], 2)
@@ -58,7 +119,11 @@ class Packet:
             self._length += subpacket.length
             self._subpackets.append(subpacket)
         
-    def process_number_operator(self):
+    def _collect_subpackets_number_operator(self):
+        '''Collect all subpackets collectively from self._content_bounded by
+        determining the count of its subpackets from bits 1 to 11. Then obtain
+        and store each subpacket until the calculated number of the
+        subpackets have been obtained.'''
         start = 1
         end = 1 + Packet._NUMBER_OPERATOR_VALUE_BIT_LENGTH
         self._number_of_subpackets = int(self._content_unbounded[start:end], 2)
@@ -83,15 +148,18 @@ class Packet:
     @property
     def subpackets(self): return self._subpackets
 
+    @property
+    def value(self): return self._value
+
     def __str__(self):
+        '''Returns all the information of the packet.'''
         s = 'Packet(\n'
         s += f'  version: {self._version}\n'
         s += f'  type ID: {self._type_id}\n'
         s += f'  length: {self._length}\n'
         s += f'  number of subpackets: {len(self._subpackets)}\n'
-        if self.type_id == Packet._LITERAL_TYPE_ID:
-            s += f'  literal value: {self._literal_value}\n'
-        else:
+        s += f'  value: {self._value}\n'
+        if self.type_id != Packet._LITERAL_TYPE_ID:
             s += f'  length type ID: {self._length_type_id}\n'
             if self._length_type_id == 0:
                 s += f'  bit length of subpackets: {self._length_of_subpackets}\n'
@@ -132,20 +200,15 @@ def version_sum(packet: Packet) -> int:
     if len(packet.subpackets) == 0:
         return packet.version
 
-    current_sum = packet.version
-    for subpacket in packet.subpackets:
-        current_sum += version_sum(subpacket)
-    return current_sum
+    return reduce(lambda p, x: p + version_sum(x), packet.subpackets, packet.version)
 
 def main():
     string = get_string('input.txt')
-    print('String:', string)
     bit_string = convert_string_to_bit_string(string)
     p = Packet(bit_string)
-    print('Length:', p.length)
-    print('Subpackets:', p.subpackets)
 
     print('Version sum:', version_sum(p))
+    print(p)
 
 if __name__ == '__main__':
     main()
