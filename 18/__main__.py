@@ -106,8 +106,8 @@ class LanternNumber:
 
     def _build_tree(self, num_list: list, depth=1) -> ConnectingNode:
         L, R = num_list
-        L_node = self._build_tree(L, depth+1) if isinstance(L, list) else ValueNode(value=L, depth=depth)
-        R_node = self._build_tree(R, depth+1) if isinstance(R, list) else ValueNode(value=R, depth=depth)
+        L_node = self._build_tree(L, depth+1) if isinstance(L, list) else ValueNode(value=L, depth=depth+1)
+        R_node = self._build_tree(R, depth+1) if isinstance(R, list) else ValueNode(value=R, depth=depth+1)
 
         connecting = ConnectingNode(left=L_node, right=R_node, depth=depth)
         connecting.left.parent = connecting
@@ -131,23 +131,23 @@ class LanternNumber:
 
     def _reduce(self):
         while True:
-            print(self)
+            # print(self)
             node_to_explode = self._find_explode()
             if node_to_explode:
-                print('Explode!')
+                # print('Explode!')
                 self._explode(node_to_explode)
                 continue
 
             node_to_split = self._find_split()
             if node_to_split:
-                print('Split!')
+                # print('Split!')
                 self._split(node_to_split)
                 continue
 
             break
     
     def _rec_find_explode(self, node: Node):
-        if isinstance(node, ValueNode): return
+        if isinstance(node, ValueNode): return None
 
         if isinstance(node, ConnectingNode) and node.depth > LanternNumber.MAX_DEPTH:
             return node
@@ -209,8 +209,8 @@ class LanternNumber:
 
         parent = node.parent
 
-        left = ValueNode(value=floor(node.value/2), depth=node.depth+2)
-        right = ValueNode(value=ceil(node.value/2), depth=node.depth+2)
+        left = ValueNode(value=floor(node.value/2), depth=node.depth+1)
+        right = ValueNode(value=ceil(node.value/2), depth=node.depth+1)
 
         left.next = right
         right.prev = left
@@ -222,7 +222,7 @@ class LanternNumber:
             right.next = next_leaf
             next_leaf.prev = right
 
-        new_node = ConnectingNode(parent=parent, left=left, right=right, depth=node.depth+1)
+        new_node = ConnectingNode(parent=parent, left=left, right=right, depth=node.depth)
         
         if parent.left is node:
             parent.left = new_node
@@ -271,7 +271,7 @@ def get_lantern_number_list(filename: str) -> list[LanternNumber]:
     return lantern_numbers
 
 def main():
-    lantern_numbers = get_lantern_number_list('18/test.txt')
+    lantern_numbers = get_lantern_number_list('18/sample_10.txt')
 
     # for lantern_number in lantern_numbers:
     #     print(lantern_number)
