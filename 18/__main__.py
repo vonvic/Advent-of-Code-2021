@@ -2,6 +2,8 @@ from __future__ import annotations
 from ast import literal_eval
 from asyncio import proactor_events
 from math import ceil, floor
+
+from numpy import isin
 class Node:
     def _check_value_type(value, expected_type) -> None:
         if not isinstance(value, expected_type):
@@ -145,23 +147,17 @@ class LanternNumber:
                 continue
 
             break
-    
-    def _rec_find_explode(self, node: Node):
-        if isinstance(node, ValueNode): return None
-
-        if isinstance(node, ConnectingNode) and node.depth > LanternNumber.MAX_DEPTH:
-            return node
-        
-        left = self._rec_find_explode(node.left)
-        if left: return left
-
-        right = self._rec_find_explode(node.right)
-        if right: return right
-
-        return None
 
     def _find_explode(self) -> ConnectingNode:
-        return self._rec_find_explode(self._root)
+        curr = self._root
+        while not isinstance(curr, ValueNode):
+            curr = curr.left
+        
+        violates_depth = lambda node: node.depth > LanternNumber.MAX_DEPTH
+
+        while curr and not violates_depth(curr.parent): curr = curr.next
+
+        return curr.parent if curr else None
 
     def _explode(self, node: ConnectingNode) -> None:
         prev_leaf: ValueNode = node.left.prev
@@ -188,20 +184,16 @@ class LanternNumber:
         else:
             parent.right = new_node
 
-    def _rec_find_split(self, node: Node) -> ValueNode:
-        if isinstance(node, ValueNode):
-            return node if node.value > LanternNumber.MAX_VALUE else None
-        else:
-            left = self._rec_find_split(node.left)
-            if left: return left
-
-            right = self._rec_find_split(node.right)
-            if right: return right
-
-            return None
-
     def _find_split(self) -> ValueNode:
-        return self._rec_find_split(self._root)
+        curr = self._root
+        while not isinstance(curr, ValueNode):
+            curr = curr.left
+        
+        violates_value = lambda node: node.value > LanternNumber.MAX_VALUE
+
+        while curr and not violates_value(curr): curr = curr.next
+
+        return curr
 
     def _split(self, node: ValueNode) -> None:
         prev_leaf: ValueNode = node.prev
@@ -260,6 +252,18 @@ class LanternNumber:
         lantern_sum._increase_depth(lantern_sum._root)
         lantern_sum._reduce()
         return lantern_sum
+    
+    def _magnitude(node: Node) -> int:
+        if isinstance(node, ValueNode):
+            return node.value
+        if isinstance(node, ConnectingNode):
+            left_value = LanternNumber._magnitude(node.left)
+            right_value = LanternNumber._magnitude(node.right)
+            return 3*left_value + 2*right_value
+
+    @property
+    def magnitude(self) -> int:
+        return LanternNumber._magnitude(self._root)
 
 def get_lantern_number_list(filename: str) -> list[LanternNumber]:
     lantern_numbers: list[LanternNumber] = []
@@ -271,19 +275,20 @@ def get_lantern_number_list(filename: str) -> list[LanternNumber]:
     return lantern_numbers
 
 def main():
-    lantern_numbers = get_lantern_number_list('18/sample_10.txt')
+    lantern_numbers = get_lantern_number_list('input.txt')
 
     # for lantern_number in lantern_numbers:
     #     print(lantern_number)
     
     print('Start!')
-    prev = lantern_numbers[0]
+    curr_sum = lantern_numbers[0]
     for curr in lantern_numbers[1:]:
         # print(f'{prev} + {curr}')
-        prev = prev + curr
-        print('Current Sum:', prev)
+        curr_sum = curr_sum + curr
+        # print('Current Sum:', curr_sum)
 
-    print('Final:', prev)
+    print('Final:', curr_sum)
+    print('Magnitude:', curr_sum.magnitude)
 
 if __name__ == '__main__':
     main()
