@@ -284,14 +284,14 @@ def __version_sum(packet: _Packet) -> int:
 
 def part_one_answer() -> Any:
     """Return part one answer."""
-    return "Not yet implemented"
+    return __version_sum(__p)
 
 
 def part_two_answer() -> int:
     """Return part two answer."""
-    p = _Packet(__bit_string)
-    return __version_sum(p)
+    return __p.value
 
 
 __string = __get_string("16/input.txt")
 __bit_string = __convert_string_to_bit_string(__string)
+__p = _Packet(__bit_string)
