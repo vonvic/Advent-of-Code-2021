@@ -156,4 +156,4 @@ def part_two_answer() -> int:
 
 
 __STEP_N = 100
-__energy_levels = get_energy_levels_map("input.txt")
+__energy_levels = get_energy_levels_map("11/input.txt")
