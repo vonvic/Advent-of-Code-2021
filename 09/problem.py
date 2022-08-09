@@ -1,6 +1,6 @@
 """Advent of Code 2021 Problem 09 Code Solution."""
 
-from itertools import reduce
+from functools import reduce
 
 
 def get_low_points_loc(height_map) -> list:
