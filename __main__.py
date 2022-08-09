@@ -51,7 +51,7 @@ def __run_problem(problem: int) -> Tuple[Answer, Answer]:
 def __display_answer(answers: Tuple[Answer, Answer]):
     """Display the answers from `answers`."""
     for i, v in enumerate(["one", "two"]):
-        print(f"Part {v} answer:\n", answers[i], sep=" " * 4)
+        print(f"Part {v} answer:\n", answers[i], sep="")
 
 
 def main():
