@@ -41,9 +41,9 @@ def __run_problem(problem: int) -> Tuple[Answer, Answer]:
         part_one = module.part_one_answer()
         part_two = module.part_two_answer()
     except AttributeError:
-        print(
+        raise AttributeError(
             "Error. Loaded problem module must have a part_one_answer and"
-            "part_two_answer functions"
+            "part_two_answer functions."
         )
     return part_one, part_two
 
