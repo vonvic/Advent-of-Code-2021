@@ -42,44 +42,44 @@ def _sin(theta: int) -> int:
 
 
 @dataclass(frozen=True)
-class Coordinate:
-    """A coordinate class in three dimensions."""
+class Beacon:
+    """A Beacon class in three dimensions."""
 
     x: int
     y: int
     z: int
 
-    def rotateZ(self, theta: int) -> Coordinate:
-        """Return a Coordinate object of self rotated about the Z-axis."""
+    def rotateZ(self, theta: int) -> Beacon:
+        """Return a Beacon object of self rotated about the Z-axis."""
         x_prime = int(self.x * _cos(theta) - self.y * _sin(theta))
         y_prime = int(self.x * _sin(theta) + self.y * _cos(theta))
         z_prime = int(self.z)
-        return Coordinate(x_prime, y_prime, z_prime)
+        return Beacon(x_prime, y_prime, z_prime)
 
-    def rotateY(self, theta: int) -> Coordinate:
-        """Return a Coordinate object of self rotated about the Y-axis."""
+    def rotateY(self, theta: int) -> Beacon:
+        """Return a Beacon object of self rotated about the Y-axis."""
         x_prime = int(self.x * _cos(theta) + self.z * _sin(theta))
         y_prime = int(self.y)
         z_prime = int(-self.x * _sin(theta) + self.z * _cos(theta))
-        return Coordinate(x_prime, y_prime, z_prime)
+        return Beacon(x_prime, y_prime, z_prime)
 
-    def rotateX(self, theta: int) -> Coordinate:
-        """Return a Coordinate object of self rotated about the X-axis."""
+    def rotateX(self, theta: int) -> Beacon:
+        """Return a Beacon object of self rotated about the X-axis."""
         x_prime = int(self.x)
         y_prime = int(self.y * _cos(theta) - self.z * _sin(theta))
         z_prime = int(self.y * _cos(theta) + self.z * _sin(theta))
-        return Coordinate(x_prime, y_prime, z_prime)
+        return Beacon(x_prime, y_prime, z_prime)
 
 
 @dataclass(frozen=True)
 class Scanner:
     """A Scanner class that holds a set of all detected beacons."""
 
-    beacons: FrozenSet[Coordinate]
+    beacons: FrozenSet[Beacon]
 
     def __rotateAxis(self, theta: int, rotate: str) -> Scanner:
         """Rotate all the beacons about some axis of `theta` degrees."""
-        rotated_beacons: MutableSet[Coordinate] = set()
+        rotated_beacons: MutableSet[Beacon] = set()
         match rotate.lower():
             case "x":
                 for beacon in self.beacons:
@@ -109,7 +109,7 @@ def get_scanners(filename: str) -> MutableSet[Scanner]:
     """
     Return a set of Scanner objects.
 
-    Each Scanner object contains all the beacon coordinates specified in
+    Each Scanner object contains all the beacon Beacons specified in
     `filename`.
     """
     scanners: set[Scanner] = set()
@@ -117,7 +117,7 @@ def get_scanners(filename: str) -> MutableSet[Scanner]:
     with open(filename, "r") as f:
         line = f.readline()
 
-        beacons: MutableSet[Coordinate] = set()
+        beacons: MutableSet[Beacon] = set()
         while line:
             line = (
                 line[:-1] if line[-1] == "\n" else line
@@ -128,7 +128,7 @@ def get_scanners(filename: str) -> MutableSet[Scanner]:
                 beacons = set()
             else:
                 x, y, z = (int(n) for n in line.split(","))
-                beacons.add(Coordinate(x, y, z))
+                beacons.add(Beacon(x, y, z))
 
             line = f.readline()
 
@@ -147,7 +147,7 @@ def main():
     """
     # scanners = get_scanners('one.txt')
 
-    scanner = Scanner(frozenset({Coordinate(1, 1, 1)}))
+    scanner = Scanner(frozenset({Beacon(1, 1, 1)}))
 
     rotated_scanners: MutableSet[Scanner] = set()
     for x_delta in range(0, 4):
