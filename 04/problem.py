@@ -99,7 +99,7 @@ def __get_sum_unmarked(board: List[List[int]]) -> int:
 __drawings: list
 __boards = []
 
-with open("input.txt", "r") as f:
+with open("04/input.txt", "r") as f:
     __drawings = [int(x) for x in f.readline().split(",")]
     f.readline()
 
