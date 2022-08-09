@@ -5,7 +5,7 @@ with open("01/input.txt", "r") as f:
     depths = [int(line.strip()) for line in f.readlines()]
 
 
-def count_increases(depths: list, width: int = 0):
+def __count_increases(depths: list, width: int = 0):
     """
     Return the # of measurements of n-len that are larger than its previous.
 
@@ -24,12 +24,12 @@ def count_increases(depths: list, width: int = 0):
 
 def part_one_answer() -> int:
     """Return the number of measurements that are larger than its previous."""
-    return count_increases(depths)
+    return __count_increases(depths)
 
 
 def part_two_answer() -> int:
     """Return the number of sums of three that are larger than its previous."""
-    return count_increases(depths, 2)
+    return __count_increases(depths, 2)
 
 
 if __name__ == "__main__":
